@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mutual Benefit Fund</title>
+  <style>
+    body{font-family:Arial, sans-serif;margin:0;padding:0;background:#f8f9fa;}
+    header{background:#003366;color:#fff;padding:15px;text-align:center;}
+    nav{background:#00509e;padding:10px;text-align:center;}
+    nav a{color:#fff;margin:0 10px;text-decoration:none;font-weight:bold;}
+    nav a:hover{text-decoration:underline;}
+    section{display:none;padding:20px;}
+    .card{background:#fff;padding:20px;margin:10px auto;border-radius:10px;box-shadow:0 6px 8px rgba(0,0,0,0.1);max-width:700px;}
+    input,select,button,textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:5px;}
+    button{background:#00509e;color:white;cursor:pointer;}
+    button:hover{background:#003f7f;}
+    table{width:100%;border-collapse:collapse;margin-top:20px;}
+    th,td{border:1px solid #ccc;padding:8px;text-align:left;}
+    th{background:#00509e;color:#fff;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to Mutual Benefit Fund</h1>
+  </header>
+
+  <nav>
+    <a href="#" onclick="showSection('home')">Home</a>
+    <a href="#" onclick="showSection('register')" id="navRegister">Register</a>
+    <a href="#" onclick="showSection('login')" id="navLogin">Customer Login</a>
+    <a href="#" onclick="showSection('adminLogin')" id="navAdminLogin">Admin Login</a>
+    <a href="#" onclick="logout()" id="navLogout" style="display:none;">Sign Out</a>
+  </nav>
+
+  <!-- Home -->
+  <section id="home" style="display:block;">
+    <div class="card">
+      <h2>About the Fund</h2>
+      <p>The Dhakuakhana College Mutual Benefit Fund (MBF) is a collective financial support system formed by the employees and staff of the college. It functions with the primary objective of extending financial assistance to its members through loans at a minimal interest rate. The MBF operates on the principle of mutual cooperation, where the contributions made by members create a common pool of resources to meet financial needs. One of its notable features is the provision of emergency loans, where members can avail up to ₹40,000 at a time, ensuring quick relief in times of urgency. The interest rate on loans is subject to change from time to time depending on prevailing financial conditions and policy decisions of the fund committee. By offering accessible and low-interest loans, the MBF not only helps in reducing financial burdens of stakeholders but also strengthens the sense of solidarity and security among college employees.</p>
+    </div>
+  </section>
+
+  <!-- Registration -->
+  <section id="register">
+    <div class="card">
+      <h2>Customer Registration</h2>
+      <input type="text" id="regName" placeholder="Full Name">
+      <input type="email" id="regEmail" placeholder="Email">
+      <input type="password" id="regPass" placeholder="Password">
+      <input type="text" id="regPhone" placeholder="Phone">
+      <input type="text" id="regPAN" placeholder="PAN Card Number">
+      <button onclick="register()">Register</button>
+    </div>
+  </section>
+
+  <!-- Customer Login -->
+  <section id="login">
+    <div class="card">
+      <h2>Customer Login</h2>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPass" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+  </section>
+
+  <!-- Admin Login -->
+  <section id="adminLogin">
+    <div class="card">
+      <h2>Admin Login</h2>
+      <input type="text" id="adminUser" placeholder="Username">
+      <input type="password" id="adminPass" placeholder="Password">
+      <button onclick="adminLogin()">Login</button>
+    </div>
+  </section>
+
+  <!-- Loan Application -->
+  <section id="applyLoan">
+    <div class="card">
+      <h2>Apply for Loan</h2>
+      <input type="text" id="loanName" placeholder="Full Name">
+      <input type="text" id="loanDesignation" placeholder="Designation">
+      <input type="text" id="loanPhone" placeholder="Phone">
+      <input type="text" id="loanPAN" placeholder="PAN Card">
+      <input type="number" id="loanAmount" placeholder="Loan Amount">
+      <select id="loanTenure" onchange="calcEMI()">
+        <option value="">Select Tenure</option>
+        <option value="11">11 Months - 5%</option>
+        <option value="15">15 Months - 5.5%</option>
+        <option value="24">24 Months - 7.5%</option>
+        <option value="36">36 Months - 8.5%</option>
+      </select>
+      <input type="text" id="emiResult" placeholder="Calculated EMI" readonly>
+      <button onclick="submitLoan()">Submit Application</button>
+    </div>
+  </section>
+
+  <!-- Admin Panel -->
+  <section id="adminPanel">
+    <div class="card">
+      <h2>Admin Panel</h2>
+      <button onclick="renderApps()">View Loan Applications</button>
+      <button onclick="renderCustomers()">View Registered Customers</button>
+      <button onclick="downloadCSV()">Download Loan Data</button>
+      <div id="adminApps"></div>
+      <div id="adminCustomers"></div>
+    </div>
+  </section>
+
+<script>
+  let users = JSON.parse(localStorage.getItem("users")||"[]");
+  let applications = JSON.parse(localStorage.getItem("applications")||"[]");
+  let currentUser = null;
+  let isAdmin = false;
+
+  function showSection(id){
+    document.querySelectorAll("section").forEach(s=>s.style.display="none");
+    document.getElementById(id).style.display="block";
+  }
+
+  function register(){
+    let u={name:regName.value,email:regEmail.value,pass:regPass.value,phone:regPhone.value,pan:regPAN.value};
+    users.push(u); localStorage.setItem("users",JSON.stringify(users));
+    alert("Registration successful!"); showSection('login');
+  }
+
+  function login(){
+    let u=users.find(x=>x.email===loginEmail.value && x.pass===loginPass.value);
+    if(u){
+      currentUser=u;
+      alert("Login successful!");
+      document.getElementById("navLogout").style.display="inline";
+      document.getElementById("navRegister").style.display="none";
+      document.getElementById("navLogin").style.display="none";
+      document.getElementById("navAdminLogin").style.display="none";
+      showSection('applyLoan');
+    } else alert("Invalid credentials");
+  }
+
+  function adminLogin(){
+    if(adminUser.value==="admin" && adminPass.value==="admin123"){
+      isAdmin=true; alert("Admin login successful!");
+      document.getElementById("navLogout").style.display="inline";
+      document.getElementById("navRegister").style.display="none";
+      document.getElementById("navLogin").style.display="none";
+      document.getElementById("navAdminLogin").style.display="none";
+      showSection('adminPanel'); renderApps();
+    } else alert("Invalid admin credentials");
+  }
+
+  function logout(){
+    currentUser=null; isAdmin=false;
+    alert("Signed out");
+    document.getElementById("navLogout").style.display="none";
+    document.getElementById("navRegister").style.display="inline";
+    document.getElementById("navLogin").style.display="inline";
+    document.getElementById("navAdminLogin").style.display="inline";
+    showSection('home');
+  }
+
+  function calcEMI(){
+    let amt=+loanAmount.value; let tenure=+loanTenure.value; if(!amt||!tenure) return;
+    let rate={11:5,15:5.5,24:7.5,36:8.5}[tenure];
+    let r=rate/1200; let emi=amt*r*Math.pow(1+r,tenure)/(Math.pow(1+r,tenure)-1);
+    emiResult.value=emi.toFixed(2);
+  }
+
+  function submitLoan(){
+    if(!currentUser){alert("Please login first");return;}
+    let app={name:loanName.value,designation:loanDesignation.value,phone:loanPhone.value,pan:loanPAN.value,
+             amount:loanAmount.value,tenure:loanTenure.value,emi:emiResult.value,status:"Pending",remarks:""};
+    applications.push(app); localStorage.setItem("applications",JSON.stringify(applications));
+    alert("Loan application submitted!"); showSection('home');
+  }
+
+  function renderApps(){
+    let html="<h3>Loan Applications</h3><table><tr><th>Name</th><th>Amount</th><th>Tenure</th><th>EMI</th><th>Status</th><th>Remarks</th><th>Action</th></tr>";
+    applications.forEach((a,i)=>{
+      html+=`<tr>
+        <td>${a.name}</td><td>${a.amount}</td><td>${a.tenure}</td><td>${a.emi}</td>
+        <td>${a.status}</td><td>${a.remarks}</td>
+        <td>
+          <button onclick="approveApp(${i})">Approve</button>
+          <button onclick="rejectApp(${i})">Reject</button>
+        </td>
+      </tr>`;
+    });
+    html+="</table>";
+    document.getElementById("adminApps").innerHTML=html;
+    document.getElementById("adminCustomers").innerHTML="";
+  }
+
+  function renderCustomers(){
+    let html="<h3>Registered Customers</h3><table><tr><th>Name</th><th>Email</th><th>Phone</th><th>PAN</th></tr>";
+    users.forEach(u=>{
+      html+=`<tr><td>${u.name}</td><td>${u.email}</td><td>${u.phone}</td><td>${u.pan||"-"}</td></tr>`;
+    });
+    html+="</table>";
+    document.getElementById("adminCustomers").innerHTML=html;
+    document.getElementById("adminApps").innerHTML="";
+  }
+
+  function approveApp(i){applications[i].status="Approved";applications[i].remarks="Approved by Admin";localStorage.setItem("applications",JSON.stringify(applications));renderApps();}
+  function rejectApp(i){applications[i].status="Rejected";applications[i].remarks="Rejected by Admin";localStorage.setItem("applications",JSON.stringify(applications));renderApps();}
+
+  function downloadCSV(){
+    let csv="Name,Amount,Tenure,EMI,Status,Remarks\n";
+    applications.forEach(a=>{csv+=`${a.name},${a.amount},${a.tenure},${a.emi},${a.status},${a.remarks}\n`;});
+    let blob=new Blob([csv],{type:'text/csv'}); let link=document.createElement("a");
+    link.href=URL.createObjectURL(blob); link.download="loan_applications.csv"; link.click();
+  }
+</script>
+</body>
+</html>
